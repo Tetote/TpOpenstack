@@ -43,21 +43,21 @@ public class Client {
 		// make the a regular call
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
-			  @Override
-			  public void run() {
-				  Object[] params = new Object[]
-							{ new Integer(2), new Integer(3) };
-					Integer result;
-					try {
-						result = (Integer) client.execute("Calculator.add", params);
-						System.out.println("2 + 3 = " + result);
-					} catch (XmlRpcException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-			  }
+			@Override
+			public void run() {
+				Object[] params = new Object[]
+						{ new Integer(2), new Integer(3) };
+				Integer result;
+				try {
+					result = (Integer) client.execute("Calculator.add", params);
+					System.out.println("2 + 3 = " + result);
+				} catch (XmlRpcException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}, 0, 1000/nbRequete);
-	
+
 		// make a call using dynamic proxy
 		/*          ClientFactory factory = new ClientFactory(client);
           Adder adder = (Adder) factory.newInstance(Adder.class);
