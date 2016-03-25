@@ -1,0 +1,16 @@
+set CLASSPATH=commons-logging-1.1.jard;ws-commons-util-1.0.2.jard;xmlrpc-client-3.1.3.jard;xmlrpc-common-3.1.3.jard;xmlrpc-server-3.1.3.jard;Server.jard;Client.jard;/tmp/r/httpcomponents-client-4.2.3/lib/httpclient-4.2.3.jard;commons-httpclient-3.1.jard;commons-codec-1.6.jar
+
+set _JAVA_OPTIONS="-Xmx256M"
+
+javac -classpath commons-logging-1.1.jard;ws-commons-util-1.0.2.jard;xmlrpc-client-3.1.3.jard;xmlrpc-common-3.1.3.jard;xmlrpc-server-3.1.3.jard;Server.jard;Client.jard;/tmp/r/httpcomponents-client-4.2.3/lib/httpclient-4.2.3.jard;commons-httpclient-3.1.jard;commons-codec-1.6.jar *.java 
+
+jar cvf Client.jar Client.class
+
+jar cvf Server.jar Server.class Calculator.class XmlRpcServlet.properties
+
+java Server
+
+sleep 1
+
+java Client
+
