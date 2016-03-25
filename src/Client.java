@@ -16,6 +16,11 @@ import org.apache.xmlrpc.XmlRpcException;
     	  if (args.length < 3 || args.length > 3) {
     		  throw new InvalidParameterException();
     	  }
+    	  
+    	  int nbRequestSec = Integer.parseInt(args[0]);
+    	  String ipRepartiteur = args[1];
+    	  String portRepartiteur = args[2];
+    	  
           // create configuration
           XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
           config.setServerURL(new URL("http://127.0.0.1:8080/xmlrpc"));
