@@ -2,6 +2,8 @@
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidParameterException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -39,11 +41,23 @@ public class Client {
 		client.setConfig(config);
 
 		// make the a regular call
-		Object[] params = new Object[]
-				{ new Integer(2), new Integer(3) };
-		Integer result = (Integer) client.execute("Calculator.add", params);
-		System.out.println("2 + 3 = " + result);
-
+		Timer timer = new Timer();
+		timer.scheduleAtFixedRate(new TimerTask() {
+			  @Override
+			  public void run() {
+				  Object[] params = new Object[]
+							{ new Integer(2), new Integer(3) };
+					Integer result;
+					try {
+						result = (Integer) client.execute("Calculator.add", params);
+						System.out.println("2 + 3 = " + result);
+					} catch (XmlRpcException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			  }
+		}, 0, 1000/nbRequete);
+	
 		// make a call using dynamic proxy
 		/*          ClientFactory factory = new ClientFactory(client);
           Adder adder = (Adder) factory.newInstance(Adder.class);
