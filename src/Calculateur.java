@@ -8,7 +8,7 @@
   import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
   import org.apache.xmlrpc.webserver.WebServer;
 
-  public class Server {
+  public class Calculateur {
       private static final int port = 8080;
 
       public static void main(String[] args) throws Exception {
