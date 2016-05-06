@@ -1,3 +1,4 @@
+package client;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,7 +50,7 @@ public class Client {
 						{ new Integer(2), new Integer(3) };
 				Integer result;
 				try {
-					result = (Integer) client.execute("Calculator.add", params);
+					result = (Integer) client.execute("Calculateur.add", params);
 					System.out.println("2 + 3 = " + result);
 				} catch (XmlRpcException e) {
 					// TODO Auto-generated catch block

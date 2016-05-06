@@ -1,3 +1,4 @@
+package calculateur;
 
 import java.net.InetAddress;
 
@@ -8,7 +9,7 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
-public class Calculateur {
+public class Server {
 	private static final int DEFAULT_PORT = 8080;
 	private static int port = DEFAULT_PORT;
 

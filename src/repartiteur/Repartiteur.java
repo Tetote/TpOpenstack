@@ -1,3 +1,4 @@
+package repartiteur;
 
 public class Repartiteur {
 

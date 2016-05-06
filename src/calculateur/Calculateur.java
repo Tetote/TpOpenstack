@@ -1,4 +1,5 @@
-public class Calculator {
+package calculateur;
+public class Calculateur {
 	public int add(int i1, int i2) {
 		return i1 + i2;
 	}
