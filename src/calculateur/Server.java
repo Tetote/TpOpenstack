@@ -1,7 +1,9 @@
 package calculateur;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
+import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.common.TypeConverterFactoryImpl;
 //  import org.apache.xmlrpc.demo.webserver.proxy.impls.AdderImpl;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
@@ -9,16 +11,25 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
-public class Server {
+public class Server implements Runnable {
 	private static final int DEFAULT_PORT = 8080;
-	private static int port = DEFAULT_PORT;
+	private int port;
+	
+	public Server(int port) {
+		this.port = port;
+	}
 
 	public static void main(String[] args) throws Exception {
-
+		int port = DEFAULT_PORT;
 		if (args.length == 1) {
 			port = Integer.parseInt(args[0]);
 		}
 
+		new Server(port).run();
+	}
+
+	@Override
+	public void run() {
 		System.out.println("== Server launch on port " + port + " ==");
 
 		WebServer webServer = new WebServer(port);
@@ -32,7 +43,12 @@ public class Server {
 		 *   org.apache.xmlrpc.demo.proxy.Adder=org.apache.xmlrpc.demo.proxy.AdderImpl
 		 */
 		
-		phm.addHandler("Calculateur", calculateur.Calculateur.class);
+		try {
+			phm.addHandler("Calculateur", calculateur.Calculateur.class);
+		} catch (XmlRpcException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		/* You may also provide the handler classes directly,
 		 * like this:
 		 
@@ -46,6 +62,11 @@ public class Server {
 		serverConfig.setEnabledForExtensions(true);
 		serverConfig.setContentLengthOptional(false);
 
-		webServer.start();
+		try {
+			webServer.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
