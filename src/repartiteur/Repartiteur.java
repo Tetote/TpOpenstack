@@ -89,22 +89,24 @@ public class Repartiteur {
 			@Override
 			public void run() {
 				// System.out.println("charge: " + cptRequest);
-				
+
 				if (cptRequest > MAX_REQUEST) {
 					addWorkerNode();
 				}
-				
+
 				int nbWorkerNodes = calculateurs.size();
 				if (nbWorkerNodes * MAX_REQUEST > cptRequest) {
 					delWorkerNode();
 				}
-				
+
 				cptRequest = 0;
 			}
 		}, 0, 1000);
 
+		// TODO: remove
 		server = new Server(1500);
 		server.run();
+
 		addWorkerNode();
 	}
 
@@ -113,42 +115,43 @@ public class Repartiteur {
 		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
 				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group default"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
-		
+
 		executeProcess(cmd);
-		
+
 		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
-		
+
 		while (!executeProcess(cmd).contains("Running")) {}
-		
+
 		cmd = "neutron floatingip-create public | grep floating_ip_address";
-		
+
 		String result = executeProcess(cmd);
-		
+
 		String ip = result.split("\\|")[2].trim();
 		System.out.println("ip:" + ip + "|");
-		
+
 		cmd = "nova floatingip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
-		
+
 		executeProcess(cmd);
-		
+
 		calculateurs.add(new WorkerNode(workerNodeId, ip));	
 	}
 
+	// TODO: test
 	public static void delWorkerNode() {
 		WorkerNode workerNode = calculateurs.get(calculateurs.size()-1);
 		calculateurs.remove(workerNode);
-		
+
 		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
-		
+
 		executeProcess(cmd);
-		
+
 		cmd = "neutron floatingip-list | grep " + workerNode.getIp();
-		
+
 		String result = executeProcess(cmd);
-		
-		String idVM = result.split("|")[0].trim();
+
+		String idVM = result.split("\\|")[1].trim();
 		System.out.println("id:" + idVM + "|");
-		
+
 		cmd = "neutron floatingip-delete " + idVM;
 	}
 
@@ -190,15 +193,15 @@ public class Repartiteur {
 
 		return result;
 	}
-	
+
 	public static String executeProcess(String cmd) {
-		ProcessBuilder process = new ProcessBuilder(cmd.split(" "));
-		
+		ProcessBuilder process = new ProcessBuilder("/bin/sh", "-c", cmd);
+
 		Process p;
 		StringBuilder sb = new StringBuilder();
 		try {
 			p = process.start();
-			
+
 			try {
 				p.waitFor();
 			} catch (InterruptedException e) {
@@ -216,7 +219,7 @@ public class Repartiteur {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return sb.toString();
 	}
 
