@@ -1,5 +1,9 @@
 package repartiteur;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,6 +30,7 @@ public class Repartiteur {
 	private static final int DEFAULT_PORT = 2000;
 	private static int port = DEFAULT_PORT;
 
+	private static int MAX_REQUEST = 20;
 
 	private static Server server;
 
@@ -84,29 +89,73 @@ public class Repartiteur {
 			@Override
 			public void run() {
 				// System.out.println("charge: " + cptRequest);
+				
+				if (cptRequest > MAX_REQUEST) {
+					addWorkerNode();
+				}
+				
+				int nbWorkerNodes = calculateurs.size();
+				if (nbWorkerNodes * MAX_REQUEST > cptRequest) {
+					delWorkerNode();
+				}
+				
 				cptRequest = 0;
 			}
 		}, 0, 1000);
 
-
 		server = new Server(1500);
 		server.run();
+		addWorkerNode();
 	}
 
 	public static void addWorkerNode() {
-
+		int workerNodeId = calculateurs.size();
+		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
+				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group default"
+				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
+		
+		executeProcess(cmd);
+		
+		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
+		
+		while (!executeProcess(cmd).contains("Running")) {}
+		
+		cmd = "neutron floatingip-create public | grep floating_ip_address";
+		
+		String result = executeProcess(cmd);
+		
+		String ip = result.split("\\|")[2].trim();
+		System.out.println("ip:" + ip + "|");
+		
+		cmd = "nova floatingip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
+		
+		executeProcess(cmd);
+		
+		calculateurs.add(new WorkerNode(workerNodeId, ip));	
 	}
 
 	public static void delWorkerNode() {
-
+		WorkerNode workerNode = calculateurs.get(calculateurs.size()-1);
+		calculateurs.remove(workerNode);
+		
+		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
+		
+		executeProcess(cmd);
+		
+		cmd = "neutron floatingip-list | grep " + workerNode.getIp();
+		
+		String result = executeProcess(cmd);
+		
+		String idVM = result.split("|")[0].trim();
+		System.out.println("id:" + idVM + "|");
+		
+		cmd = "neutron floatingip-delete " + idVM;
 	}
 
 
 	// TODO: ecrire la méthode !
 	public int request(String method, int i1, int i2) {
 		cptRequest++;
-		
-		
 
 		// create configuration
 		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -140,6 +189,35 @@ public class Repartiteur {
 		}
 
 		return result;
+	}
+	
+	public static String executeProcess(String cmd) {
+		ProcessBuilder process = new ProcessBuilder(cmd.split(" "));
+		
+		Process p;
+		StringBuilder sb = new StringBuilder();
+		try {
+			p = process.start();
+			
+			try {
+				p.waitFor();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			InputStream is = p.getInputStream(); 
+			InputStreamReader isr = new InputStreamReader(is);
+			BufferedReader br = new BufferedReader(isr);
+			String ligne;
+
+			while (( ligne = br.readLine()) != null) { 
+				sb.append(ligne).append(System.lineSeparator());
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return sb.toString();
 	}
 
 }

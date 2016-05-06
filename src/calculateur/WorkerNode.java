@@ -2,21 +2,20 @@ package calculateur;
 
 public class WorkerNode {
 	
+	private int id;
 	private String ip;
-	private String port;
 	
-	public WorkerNode(String ip, String port) {
-		super();
+	public WorkerNode(int id, String ip) {
+		this.id = id;
 		this.ip = ip;
-		this.port = port;
 	}
 
 	public String getIp() {
 		return ip;
 	}
-
-	public String getPort() {
-		return port;
+	
+	public int getId() {
+		return id;
 	}
 
 }
