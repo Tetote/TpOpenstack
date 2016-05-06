@@ -19,7 +19,7 @@ public class Server {
 			port = Integer.parseInt(args[0]);
 		}
 
-		System.out.println("== Calculateur launch on port " + port + " ==");
+		System.out.println("== Server launch on port " + port + " ==");
 
 		WebServer webServer = new WebServer(port);
 
@@ -31,13 +31,11 @@ public class Server {
 		 *   Calculator=org.apache.xmlrpc.demo.Calculator
 		 *   org.apache.xmlrpc.demo.proxy.Adder=org.apache.xmlrpc.demo.proxy.AdderImpl
 		 */
-		phm.load(Thread.currentThread().getContextClassLoader(),
-				"XmlRpcServlet.properties");
-
+		
+		phm.addHandler("Calculateur", calculateur.Calculateur.class);
 		/* You may also provide the handler classes directly,
 		 * like this:
-		 * phm.addHandler("Calculator",
-		 *     org.apache.xmlrpc.demo.Calculator.class);
+		 
 		 * phm.addHandler(org.apache.xmlrpc.demo.proxy.Adder.class.getName(),
 		 *     org.apache.xmlrpc.demo.proxy.AdderImpl.class);
 		 */

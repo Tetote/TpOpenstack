@@ -18,7 +18,7 @@ public class Client {
 
 		int nbRequete = 18;
 		String nodeLocation = "127.0.0.1";
-		int port = 8080;
+		int port = 2000;
 
 		if (args.length == 3) {
 			nbRequete = Integer.parseInt(args[0]);
@@ -47,10 +47,10 @@ public class Client {
 			@Override
 			public void run() {
 				Object[] params = new Object[]
-						{ new Integer(2), new Integer(3) };
+						{ new String("add"), new Integer(2), new Integer(3) };
 				Integer result;
 				try {
-					result = (Integer) client.execute("Calculateur.add", params);
+					result = (Integer) client.execute("Repartiteur.request", params);
 					System.out.println("2 + 3 = " + result);
 				} catch (XmlRpcException e) {
 					// TODO Auto-generated catch block
