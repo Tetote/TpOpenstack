@@ -1,4 +1,4 @@
-package calculateur;
+package repartiteur;
 
 public class WorkerNode {
 	

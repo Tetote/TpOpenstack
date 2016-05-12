@@ -3,7 +3,6 @@ package client;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.InvalidParameterException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -11,8 +10,6 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
-import org.apache.xmlrpc.client.util.ClientFactory;
-//  import org.apache.xmlrpc.demo.proxy.Adder;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
@@ -42,7 +39,7 @@ public class Client {
 
 		runTimer();
 
-		System.out.println("== Client started on port " + port);
+		System.out.println("== Client started on port " + PORT_CLIENT);
 	}
 
 	public static void connectRepartiteur(String ip, int port) {

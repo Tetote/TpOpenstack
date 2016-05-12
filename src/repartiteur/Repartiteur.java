@@ -21,7 +21,6 @@ import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
 import calculateur.Server;
-import calculateur.WorkerNode;
 
 public class Repartiteur {
 
@@ -83,12 +82,12 @@ public class Repartiteur {
 				// System.out.println("charge: " + cptRequest);
 
 				if (cptRequest > MAX_REQUEST) {
-					addWorkerNode();
+					// addWorkerNode();
 				}
 
 				int nbWorkerNodes = calculateurs.size();
 				if (nbWorkerNodes * MAX_REQUEST > cptRequest) {
-					delWorkerNode();
+					// delWorkerNode();
 				}
 
 				cptRequest = 0;
@@ -99,7 +98,7 @@ public class Repartiteur {
 		//server = new Server(1500);
 		//server.run();
 
-		addWorkerNode();
+		//addWorkerNode();
 	}
 
 	public static void addWorkerNode() {
@@ -112,18 +111,42 @@ public class Repartiteur {
 
 		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
 
-		while (!executeProcess(cmd).contains("Running")) {}
+		System.out.println("Spawning VM...");
+
+		while (!executeProcess(cmd).contains("Running")) {
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		System.out.println("VM OK...");
 
 		cmd = "neutron floatingip-create public | grep floating_ip_address";
 
 		String result = executeProcess(cmd);
 
 		String ip = result.split("\\|")[2].trim();
-		System.out.println("ip:" + ip + "|");
+		System.out.println("ip:" + ip);
 
-		cmd = "nova floatingip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
+		cmd = "nova floating-ip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
 
 		executeProcess(cmd);
+
+		System.out.println("Waiting ssh...");
+
+		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar 19020 >/dev/null 2>/dev/null &'";
+
+		while (executeProcessReturnCode(cmd) != 0) {
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		System.out.println("ssh OK...");
 
 		calculateurs.add(new WorkerNode(workerNodeId, ip));
 	}
@@ -147,17 +170,16 @@ public class Repartiteur {
 		cmd = "neutron floatingip-delete " + idVM;
 	}
 
-
-	// TODO: ecrire la méthode !
 	public int request(String method, int i1, int i2) {
 		cptRequest++;
+
+		System.out.println("Request received");
 
 		// create configuration
 		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 		try {
-			config.setServerURL(new URL("http://127.0.0.1:1500/xmlrpc"));
+			config.setServerURL(new URL("http://195.220.53.46:19020/xmlrpc"));
 		} catch (MalformedURLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		config.setEnabledForExtensions(true);  
@@ -211,6 +233,26 @@ public class Repartiteur {
 		}
 
 		return sb.toString();
+	}
+
+	public static int executeProcessReturnCode(String cmd) {
+		ProcessBuilder process = new ProcessBuilder("/bin/sh", "-c", cmd);
+
+		Process p = null;
+		try {
+			p = process.start();
+
+			try {
+				p.waitFor();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return p.exitValue();
 	}
 
 }

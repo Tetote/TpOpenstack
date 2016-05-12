@@ -12,9 +12,9 @@ import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
 public class Server implements Runnable {
-	private static final int DEFAULT_PORT = 8080;
+	private static final int DEFAULT_PORT = 19020;
 	private int port;
-	
+
 	public Server(int port) {
 		this.port = port;
 	}
@@ -54,7 +54,6 @@ public class Server implements Runnable {
 		try {
 			webServer.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

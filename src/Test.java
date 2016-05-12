@@ -13,31 +13,47 @@ public class Test {
 		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
 				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group default"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
-		
+
 		executeProcess(cmd);
-		
+
 		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
+
+		System.out.println("Spawning VM...");
 		
-		while (!executeProcess(cmd).contains("Running")) {};
-		
-		cmd = "neutron floatingip-create public| grep floating_ip_address";
-		
-		String result = executeProcess(cmd);
-		
-		System.out.println(result);
-		
-		String[] array = result.split("\\|");
-		
-		for (int i = 0; i < array.length; i++) {
-			System.out.println(i+ ": " +array[i]);
+		while (!executeProcess(cmd).contains("Running")) {
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		
-		String ip = array[2].trim();
-		System.out.println("ip:" + ip + "|");
+		System.out.println("VM OK...");
+
+		cmd = "neutron floatingip-create public | grep floating_ip_address";
+
+		String result = executeProcess(cmd);
 		
+		String ip = result.split("\\|")[2].trim();
+		System.out.println("ip:" + ip);
+
 		cmd = "nova floating-ip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
+
+		executeProcess(cmd);
 		
-		System.out.println(executeProcess(cmd));
+		System.out.println("Waiting ssh...");
+		
+		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar 19020 >/dev/null 2>/dev/null &'";
+		
+		while (executeProcessReturnCode(cmd) != 0) {
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		System.out.println("ssh OK...");
 	}
 	
 	public static String executeProcess(String cmd) {
@@ -69,6 +85,26 @@ public class Test {
 		}
 		
 		return sb.toString();
+	}
+	
+	public static int executeProcessReturnCode(String cmd) {
+		ProcessBuilder process = new ProcessBuilder("/bin/sh", "-c", cmd);
+
+		Process p = null;
+		try {
+			p = process.start();
+
+			try {
+				p.waitFor();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return p.exitValue();
 	}
 
 }
