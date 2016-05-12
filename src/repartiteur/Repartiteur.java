@@ -7,9 +7,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,7 +37,7 @@ public class Repartiteur {
 	// List<WorkerNode>
 	private static List<WorkerNode> calculateurs;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		if (args.length == 1) {
 			port = Integer.parseInt(args[0]);
 		}
@@ -50,7 +48,7 @@ public class Repartiteur {
 	}
 
 
-	public static void run() throws Exception {
+	public static void run() {
 		System.out.println("== Repartiteur launch on port " + port + " ==");
 
 		WebServer webServer = new WebServer(port);
@@ -58,21 +56,11 @@ public class Repartiteur {
 		XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
 
 		PropertyHandlerMapping phm = new PropertyHandlerMapping();
-		/* Load handler definitions from a property file.
-		 * The property file might look like:
-		 *   Calculator=org.apache.xmlrpc.demo.Calculator
-		 *   org.apache.xmlrpc.demo.proxy.Adder=org.apache.xmlrpc.demo.proxy.AdderImpl
-		 */
-
-		phm.addHandler("Repartiteur", repartiteur.Repartiteur.class);
-
-		/* You may also provide the handler classes directly,
-		 * like this:
-		 * phm.addHandler("Calculator",
-		 *     org.apache.xmlrpc.demo.Calculator.class);
-		 * phm.addHandler(org.apache.xmlrpc.demo.proxy.Adder.class.getName(),
-		 *     org.apache.xmlrpc.demo.proxy.AdderImpl.class);
-		 */
+		try {
+			phm.addHandler("Repartiteur", repartiteur.Repartiteur.class);
+		} catch (XmlRpcException e) {
+			e.printStackTrace();
+		}
 		xmlRpcServer.setHandlerMapping(phm);
 
 		XmlRpcServerConfigImpl serverConfig =
@@ -80,7 +68,11 @@ public class Repartiteur {
 		serverConfig.setEnabledForExtensions(true);
 		serverConfig.setContentLengthOptional(false);
 
-		webServer.start();
+		try {
+			webServer.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		cptRequest = 0;
 
@@ -104,8 +96,8 @@ public class Repartiteur {
 		}, 0, 1000);
 
 		// TODO: remove
-		server = new Server(1500);
-		server.run();
+		//server = new Server(1500);
+		//server.run();
 
 		addWorkerNode();
 	}
@@ -133,7 +125,7 @@ public class Repartiteur {
 
 		executeProcess(cmd);
 
-		calculateurs.add(new WorkerNode(workerNodeId, ip));	
+		calculateurs.add(new WorkerNode(workerNodeId, ip));
 	}
 
 	// TODO: test
@@ -185,9 +177,7 @@ public class Repartiteur {
 		Integer result = null;
 		try {
 			result = (Integer) client.execute("Calculateur." + method, params);
-			// System.out.println("2 + 3 = " + result);
 		} catch (XmlRpcException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
