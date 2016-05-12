@@ -24,7 +24,7 @@ import calculateur.Server;
 
 public class Repartiteur {
 
-	private static final int DEFAULT_PORT = 2000;
+	private static final int DEFAULT_PORT = 19005;
 	private static int port = DEFAULT_PORT;
 
 	private static int MAX_REQUEST = 20;
@@ -62,8 +62,7 @@ public class Repartiteur {
 		}
 		xmlRpcServer.setHandlerMapping(phm);
 
-		XmlRpcServerConfigImpl serverConfig =
-				(XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
+		XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
 		serverConfig.setEnabledForExtensions(true);
 		serverConfig.setContentLengthOptional(false);
 
@@ -82,29 +81,25 @@ public class Repartiteur {
 				// System.out.println("charge: " + cptRequest);
 
 				if (cptRequest > MAX_REQUEST) {
-					// addWorkerNode();
+					addWorkerNode();
 				}
 
 				int nbWorkerNodes = calculateurs.size();
 				if (nbWorkerNodes * MAX_REQUEST > cptRequest) {
-					// delWorkerNode();
+					delWorkerNode();
 				}
 
 				cptRequest = 0;
 			}
 		}, 0, 1000);
 
-		// TODO: remove
-		//server = new Server(1500);
-		//server.run();
-
-		//addWorkerNode();
+		addWorkerNode();
 	}
 
 	public static void addWorkerNode() {
 		int workerNodeId = calculateurs.size();
 		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
-				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group default"
+				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group myRuleIsAmazing"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
 
 		executeProcess(cmd);
@@ -178,7 +173,7 @@ public class Repartiteur {
 		// create configuration
 		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 		try {
-			config.setServerURL(new URL("http://195.220.53.46:19020/xmlrpc"));
+			config.setServerURL(new URL("http://195.220.53.28:22/xmlrpc"));
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		}
@@ -189,8 +184,7 @@ public class Repartiteur {
 		XmlRpcClient client = new XmlRpcClient();
 
 		// use Commons HttpClient as transport
-		client.setTransportFactory(
-				new XmlRpcCommonsTransportFactory(client));
+		client.setTransportFactory(new XmlRpcCommonsTransportFactory(client));
 		// set configuration
 		client.setConfig(config);
 
@@ -202,6 +196,8 @@ public class Repartiteur {
 		} catch (XmlRpcException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println("Get result " + result);
 
 		return result;
 	}

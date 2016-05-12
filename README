@@ -1,0 +1,7 @@
+
+# Don't lose 3 hours anymore
+
+nova secgroup-create myRuleIsAmazing "moar ports"
+
+nova secgroup-add-rule myRuleIsAmazing tcp 19020 19020 0.0.0.0/0
+nova secgroup-add-rule myRuleIsAmazing tcp 22 22 0.0.0.0/0

@@ -46,8 +46,7 @@ public class Server implements Runnable {
 
 		xmlRpcServer.setHandlerMapping(phm);
 
-		XmlRpcServerConfigImpl serverConfig =
-				(XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
+		XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
 		serverConfig.setEnabledForExtensions(true);
 		serverConfig.setContentLengthOptional(false);
 

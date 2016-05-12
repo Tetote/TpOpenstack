@@ -11,7 +11,7 @@ public class Test {
 		
 		int workerNodeId = 0;
 		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
-				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group default"
+				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group myRuleIsAmazing"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
 
 		executeProcess(cmd);
