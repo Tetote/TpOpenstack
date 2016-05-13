@@ -107,7 +107,7 @@ public class Client {
 	}
 
 	public boolean updateRate(int rate) {
-		this.requestRate = rate;
+		requestRate = rate;
 
 		return true;
 	}
