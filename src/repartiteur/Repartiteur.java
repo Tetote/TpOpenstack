@@ -169,17 +169,18 @@ public class Repartiteur {
 	}
 
 	//TODO: add thread
-	public Future request(String method, int i1, int i2) {
+	public Future<Integer> request(String method, int i1, int i2) {
 		cptRequest++;
 		WorkerNode workerNode = calculateurs.pollFirst();		
 		calculateurs.addLast(workerNode);
 		
 		int result = 0;
-	    ExecutorService executor = Executors.newSingleThreadExecutor();
-	    Callable<Integer> callable = new Callable<Integer>() {
-	        @Override
-	        public Integer call() {
-	        	System.out.println("Request received");
+		ExecutorService pool = Executors.newFixedThreadPool(2); // creates a pool of threads for the Future to draw from
+
+		Future<Integer> value = pool.submit(new Callable<Integer>() {
+		    @Override
+		    public Integer call() {
+		    	System.out.println("Request received");
 
 	    		XmlRpcClient client = workerNode.createConfiguration();
 
@@ -194,11 +195,9 @@ public class Repartiteur {
 	    		
 	    		System.out.println("Get result " + result);
 	    		return result;
-	        }
-	    };
-	    Future<Integer> future = executor.submit(callable);
-	    executor.shutdown();
-		return future;
+		    }
+		});	    
+		return value;
 	}
 
 	public static String executeProcess(String cmd) {

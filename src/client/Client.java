@@ -100,7 +100,7 @@ public class Client {
 						{ new String("add"), new Integer(2), new Integer(3) };
 				Integer result;
 				try {
-					result = (Integer)((Future) client.execute("Repartiteur.request", params)).get();
+					result = (Integer)((Future<Integer>) client.execute("Repartiteur.request", params)).get();
 					System.out.println("2 + 3 = " + result);
 				} catch (XmlRpcException e) {
 					e.printStackTrace();
