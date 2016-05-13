@@ -5,6 +5,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -39,7 +41,7 @@ public class Client {
 
 		runTimer();
 
-		System.out.println("== Client started on port " + PORT_CLIENT);
+		System.out.println("== Client started on port " + PORT_CLIENT + " ==");
 	}
 
 	public static void connectRepartiteur(String ip, int port) {
@@ -88,6 +90,7 @@ public class Client {
 		}
 	}
 
+	//TODO: add thread
 	public static void runTimer() {
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
@@ -97,9 +100,15 @@ public class Client {
 						{ new String("add"), new Integer(2), new Integer(3) };
 				Integer result;
 				try {
-					result = (Integer) client.execute("Repartiteur.request", params);
+					result = (Integer)((Future) client.execute("Repartiteur.request", params)).get();
 					System.out.println("2 + 3 = " + result);
 				} catch (XmlRpcException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}

@@ -6,10 +6,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -29,19 +34,16 @@ public class Repartiteur {
 
 	private static int MAX_REQUEST = 20;
 
-	private static Server server;
-
 	private static int cptRequest;
 
-	// List<WorkerNode>
-	private static List<WorkerNode> calculateurs;
-
+	private static ArrayDeque<WorkerNode> calculateurs;
+	
 	public static void main(String[] args) {
 		if (args.length == 1) {
 			port = Integer.parseInt(args[0]);
 		}
 
-		calculateurs = new ArrayList<WorkerNode>();
+		calculateurs = new ArrayDeque<WorkerNode>();
 
 		run();
 	}
@@ -72,6 +74,8 @@ public class Repartiteur {
 			e.printStackTrace();
 		}
 
+		addWorkerNode();
+		
 		cptRequest = 0;
 
 		Timer timer = new Timer();
@@ -91,9 +95,7 @@ public class Repartiteur {
 
 				cptRequest = 0;
 			}
-		}, 0, 1000);
-
-		addWorkerNode();
+		}, 0, 1000);		
 	}
 
 	public static void addWorkerNode() {
@@ -143,63 +145,60 @@ public class Repartiteur {
 
 		System.out.println("ssh OK...");
 
-		calculateurs.add(new WorkerNode(workerNodeId, ip));
+		calculateurs.addLast(new WorkerNode(workerNodeId, ip));
 	}
 
 	// TODO: test
 	public static void delWorkerNode() {
-		WorkerNode workerNode = calculateurs.get(calculateurs.size()-1);
-		calculateurs.remove(workerNode);
+		WorkerNode workerNode = calculateurs.pollLast();
 
-		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
+		if (workerNode != null) {
+			String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
 
-		executeProcess(cmd);
+			executeProcess(cmd);
 
-		cmd = "neutron floatingip-list | grep " + workerNode.getIp();
+			cmd = "neutron floatingip-list | grep " + workerNode.getIp();
 
-		String result = executeProcess(cmd);
+			String result = executeProcess(cmd);
 
-		String idVM = result.split("\\|")[1].trim();
-		System.out.println("id:" + idVM + "|");
+			String idVM = result.split("\\|")[1].trim();
+			System.out.println("id:" + idVM + "|");
 
-		cmd = "neutron floatingip-delete " + idVM;
+			cmd = "neutron floatingip-delete " + idVM;
+		}		
 	}
 
-	public int request(String method, int i1, int i2) {
+	//TODO: add thread
+	public Future request(String method, int i1, int i2) {
 		cptRequest++;
-
-		System.out.println("Request received");
-
-		// create configuration
-		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-		try {
-			config.setServerURL(new URL("http://195.220.53.28:22/xmlrpc"));
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
-		}
-		config.setEnabledForExtensions(true);  
-		config.setConnectionTimeout(60 * 1000);
-		config.setReplyTimeout(60 * 1000);
-
-		XmlRpcClient client = new XmlRpcClient();
-
-		// use Commons HttpClient as transport
-		client.setTransportFactory(new XmlRpcCommonsTransportFactory(client));
-		// set configuration
-		client.setConfig(config);
-
-		Object[] params = new Object[]
-				{ new Integer(i1), new Integer(i2) };
-		Integer result = null;
-		try {
-			result = (Integer) client.execute("Calculateur." + method, params);
-		} catch (XmlRpcException e) {
-			e.printStackTrace();
-		}
+		WorkerNode workerNode = calculateurs.pollFirst();		
+		calculateurs.addLast(workerNode);
 		
-		System.out.println("Get result " + result);
+		int result = 0;
+	    ExecutorService executor = Executors.newSingleThreadExecutor();
+	    Callable<Integer> callable = new Callable<Integer>() {
+	        @Override
+	        public Integer call() {
+	        	System.out.println("Request received");
 
-		return result;
+	    		XmlRpcClient client = workerNode.createConfiguration();
+
+	    		Object[] params = new Object[]
+	    				{ new Integer(i1), new Integer(i2) };
+	    		Integer result = null;
+	    		try {
+	    			result = (Integer) client.execute("Calculateur." + method, params);
+	    		} catch (XmlRpcException e) {
+	    			e.printStackTrace();
+	    		}
+	    		
+	    		System.out.println("Get result " + result);
+	    		return result;
+	        }
+	    };
+	    Future<Integer> future = executor.submit(callable);
+	    executor.shutdown();
+		return future;
 	}
 
 	public static String executeProcess(String cmd) {
