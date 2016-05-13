@@ -160,9 +160,11 @@ public class Repartiteur {
 		String result = executeProcess(cmd);
 
 		String idVM = result.split("\\|")[1].trim();
-		System.out.println("id:" + idVM + "|");
+		System.out.println("id:" + idVM);
 
 		cmd = "neutron floatingip-delete " + idVM;
+
+		executeProcess(cmd);
 	}
 
 	public int request(String method, int i1, int i2) {
