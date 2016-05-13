@@ -85,7 +85,7 @@ public class Repartiteur {
 				}
 
 				int nbWorkerNodes = calculateurs.size();
-				if (nbWorkerNodes * MAX_REQUEST > cptRequest) {
+				if (nbWorkerNodes * MAX_REQUEST > cptRequest && nbWorkerNodes > 1) {
 					delWorkerNode();
 				}
 
