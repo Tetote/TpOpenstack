@@ -27,16 +27,10 @@ public class Client {
 	public static XmlRpcClient client;
 	public static int requestRate = 18;
 
+	private static TimerTask timerTask;
+	private static Timer timer;
+
 	public static void main(String[] args) throws Exception {
-
-		System.out.println(ColorUtil.BLUE + "AAA");
-		System.out.println(ColorUtil.RED + "AAA");
-		System.out.println(ColorUtil.YELLOW + "AAA");
-		System.out.println(ColorUtil.CYAN + "AAA");
-		System.out.println(ColorUtil.MAGENTA + "AAA");
-		System.out.println(ColorUtil.GREEN + "AAA");
-
-
 		String host = "127.0.0.1";
 		int port = 19005;
 
@@ -102,8 +96,23 @@ public class Client {
 	}
 
 	public static void runTimer() {
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
+		createTimerTask();
+		timer = new Timer();
+		timer.scheduleAtFixedRate(timerTask, 1000, 1000/requestRate);
+	}
+
+	public boolean updateRate(int rate) {
+		requestRate = rate;
+
+		timerTask.cancel();
+		createTimerTask();
+		timer.scheduleAtFixedRate(timerTask, 1000, 1000/requestRate);
+
+		return true;
+	}
+
+	private static void createTimerTask() {
+		timerTask = new TimerTask() {
 			@Override
 			public void run() {
 				new Thread() {
@@ -120,19 +129,18 @@ public class Client {
 						Integer result;
 						try {
 							result = (Integer) client.execute("Repartiteur.request", params);
-							System.out.println(ColorUtil.CYAN + "[Client] "+i1+methodDisplay+i2+" = " + result);
+
+							if (result != null) {
+								System.out.println(ColorUtil.CYAN + "[Client]["+requestRate+"] "+i1+methodDisplay+i2+" = " + result);
+							} else {
+								System.out.println(ColorUtil.RED + "[Client]["+requestRate+"] Repartiteur not ready :(");
+							}
 						} catch (XmlRpcException e) {
 							e.printStackTrace();
 						}
-					};
+					}
 				}.start();
 			}
-		}, 1000, 1000/requestRate);
-	}
-
-	public boolean updateRate(int rate) {
-		requestRate = rate;
-
-		return true;
+		};
 	}
 }

@@ -17,9 +17,9 @@ public class Update_Client {
 		int port = 19000;
 
 		if (args.length == 3) {
-			requestRate = Integer.parseInt(args[1]);
-			host = args[2];
-			port = Integer.parseInt(args[3]);
+			requestRate = Integer.parseInt(args[0]);
+			host = args[1];
+			port = Integer.parseInt(args[2]);
 		} else {
 			System.out.println("Usage: Update_Client nbReq host port");
 		}

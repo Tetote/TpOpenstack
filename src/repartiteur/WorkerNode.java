@@ -3,12 +3,12 @@ package repartiteur;
 import org.apache.xmlrpc.client.XmlRpcClient;
 
 public class WorkerNode {
-	
-	private int id;
+
+	private String id;
 	private String ip;
 	private XmlRpcClient client;
-	
-	public WorkerNode(int id, String ip, XmlRpcClient client) {
+
+	public WorkerNode(String id, String ip, XmlRpcClient client) {
 		this.id = id;
 		this.ip = ip;
 		this.client = client;
@@ -17,11 +17,11 @@ public class WorkerNode {
 	public String getIp() {
 		return ip;
 	}
-	
-	public int getId() {
+
+	public String getId() {
 		return id;
 	}
-	
+
 	public XmlRpcClient getClient() {
 		return client;
 	}
