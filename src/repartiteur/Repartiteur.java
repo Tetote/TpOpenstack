@@ -76,19 +76,28 @@ public class Repartiteur {
 				System.out.println("charge: " + cptRequest);
 
 				if (cptRequest > MAX_REQUEST) {
-					//addWorkerNode();
+					addWorkerNode();
 				}
 
 				int nbWorkerNodes = calculateurs.size();
 				if (nbWorkerNodes * MAX_REQUEST > cptRequest && nbWorkerNodes > 1) {
-					//delWorkerNode();
+					delWorkerNode();
 				}
 
 				cptRequest = 0;
 			}
 		}, 0, 1000);
 
-		//addWorkerNode();
+		addWorkerNode();
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				System.out.println("\n== Shutdown all VM... Please wait...");
+				for (WorkerNode node : calculateurs) {
+					delWorkerNode(node);
+				}
+			}
+		});
 	}
 
 	public static void addWorkerNode() {
@@ -159,9 +168,11 @@ public class Repartiteur {
 		calculateurs.addLast(new WorkerNode(workerNodeId, ip, client));
 	}
 
-	// TODO: test
 	public static void delWorkerNode() {
-		WorkerNode workerNode = calculateurs.pollLast();
+		delWorkerNode(calculateurs.pollLast());
+	}
+
+	public static void delWorkerNode(WorkerNode workerNode) {
 
 		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
 
@@ -182,10 +193,15 @@ public class Repartiteur {
 	public int request(String method, int i1, int i2) {
 		cptRequest++;
 
-		System.out.println("Request received");
-/*
-		WorkerNode workerNode = calculateurs.pollFirst();		
-		calculateurs.addLast(workerNode);
+		WorkerNode workerNode = calculateurs.peekFirst();
+
+		if (workerNode == null) {
+			return -1;
+		}
+
+		synchronized (calculateurs) {
+			calculateurs.addLast(calculateurs.pollFirst());
+		}
 
 		Object[] params = new Object[]
 				{ new Integer(i1), new Integer(i2) };
@@ -196,9 +212,7 @@ public class Repartiteur {
 			e.printStackTrace();
 		}
 
-		System.out.println("Get result " + result);
-*/
-		return 0;
+		return result;
 	}
 
 	public static String executeProcess(String cmd) {

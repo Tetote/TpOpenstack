@@ -98,7 +98,6 @@ public class Client {
 						Object[] params = new Object[]
 								{ new String("add"), new Integer(2), new Integer(3) };
 						Integer result;
-						System.out.println("COUCOU!");
 						try {
 							result = (Integer) client.execute("Repartiteur.request", params);
 							System.out.println("2 + 3 = " + result);
