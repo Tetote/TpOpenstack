@@ -19,6 +19,8 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
+import util.ColorUtil;
+
 public class Repartiteur {
 
 	private static final int DEFAULT_PORT = 19005;
@@ -43,7 +45,7 @@ public class Repartiteur {
 
 
 	public static void run() {
-		System.out.println("== Repartiteur launch on port " + port + " ==");
+		System.out.println(ColorUtil.GREEN + "== Repartiteur launch on port " + port + " ==");
 
 		WebServer webServer = new WebServer(port);
 
@@ -73,7 +75,7 @@ public class Repartiteur {
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				System.out.println("charge: " + cptRequest);
+				// System.out.println("charge: " + cptRequest);
 
 				if (cptRequest > MAX_REQUEST) {
 					addWorkerNode();
@@ -102,6 +104,7 @@ public class Repartiteur {
 
 	public static void addWorkerNode() {
 		int workerNodeId = calculateurs.size();
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Spawning a VM");
 		String cmd = "nova boot --flavor m1.small --image myUbuntuIsAmazing"
 				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group myRuleIsAmazing"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
@@ -110,7 +113,7 @@ public class Repartiteur {
 
 		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
 
-		System.out.println("Spawning VM...");
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Checking VM status...");
 
 		while (!executeProcess(cmd).contains("Running")) {
 			try {
@@ -120,20 +123,19 @@ public class Repartiteur {
 			}
 		}
 
-		System.out.println("VM OK...");
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] "+ColorUtil.GREEN+"VM OK!");
 
 		cmd = "neutron floatingip-create public | grep floating_ip_address";
 
 		String result = executeProcess(cmd);
 
 		String ip = result.split("\\|")[2].trim();
-		System.out.println("ip:" + ip);
 
 		cmd = "nova floating-ip-associate myUbuntuIsAmazing" + workerNodeId + " " + ip;
 
 		executeProcess(cmd);
 
-		System.out.println("Waiting ssh...");
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Waiting ssh for ip "+ip+"...");
 
 		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar 19020 >/dev/null 2>/dev/null &'";
 
@@ -145,7 +147,7 @@ public class Repartiteur {
 			}
 		}
 
-		System.out.println("ssh OK...");
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] "+ColorUtil.GREEN+"SSH OK!");
 
 		// create configuration
 		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
@@ -174,6 +176,8 @@ public class Repartiteur {
 
 	public static void delWorkerNode(WorkerNode workerNode) {
 
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Deleting VM "+workerNode.getIp()+" ...");
+
 		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
 
 		executeProcess(cmd);
@@ -198,6 +202,8 @@ public class Repartiteur {
 		if (workerNode == null) {
 			return -1;
 		}
+
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Sending request to "+workerNode.getIp() + "...");
 
 		synchronized (calculateurs) {
 			calculateurs.addLast(calculateurs.pollFirst());

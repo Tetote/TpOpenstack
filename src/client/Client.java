@@ -3,6 +3,7 @@ package client;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -15,7 +16,11 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
+import util.ColorUtil;
+
 public class Client {
+
+	private static final Random r = new Random();
 
 	public static final int PORT_CLIENT = 19000;
 
@@ -23,6 +28,14 @@ public class Client {
 	public static int requestRate = 18;
 
 	public static void main(String[] args) throws Exception {
+
+		System.out.println(ColorUtil.BLUE + "AAA");
+		System.out.println(ColorUtil.RED + "AAA");
+		System.out.println(ColorUtil.YELLOW + "AAA");
+		System.out.println(ColorUtil.CYAN + "AAA");
+		System.out.println(ColorUtil.MAGENTA + "AAA");
+		System.out.println(ColorUtil.GREEN + "AAA");
+
 
 		String host = "127.0.0.1";
 		int port = 19005;
@@ -39,7 +52,7 @@ public class Client {
 
 		runTimer();
 
-		System.out.println("== Client started on port " + PORT_CLIENT);
+		System.out.println(ColorUtil.GREEN + "== Client started on port " + PORT_CLIENT);
 	}
 
 	public static void connectRepartiteur(String ip, int port) {
@@ -94,13 +107,20 @@ public class Client {
 			@Override
 			public void run() {
 				new Thread() {
-					public void run() {				
-						Object[] params = new Object[]
-								{ new String("add"), new Integer(2), new Integer(3) };
+					public void run() {
+						Integer i1 = r.nextInt(100);
+						Integer i2 = r.nextInt(100);
+
+						boolean methodAdd = r.nextBoolean();
+
+						String method = methodAdd ? "add" : "subtract";
+						String methodDisplay = methodAdd ? "+" : "-";
+
+						Object[] params = new Object[] { method, i1, i2 };
 						Integer result;
 						try {
 							result = (Integer) client.execute("Repartiteur.request", params);
-							System.out.println("2 + 3 = " + result);
+							System.out.println(ColorUtil.CYAN + "[Client] "+i1+methodDisplay+i2+" = " + result);
 						} catch (XmlRpcException e) {
 							e.printStackTrace();
 						}

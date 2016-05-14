@@ -8,6 +8,8 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
+import util.ColorUtil;
+
 public class Server implements Runnable {
 	private static final int DEFAULT_PORT = 19020;
 	private int port;
@@ -27,7 +29,7 @@ public class Server implements Runnable {
 
 	@Override
 	public void run() {
-		System.out.println("== Server launch on port " + port + " ==");
+		System.out.println(ColorUtil.GREEN + "== Server launch on port " + port + " ==");
 
 		WebServer webServer = new WebServer(port);
 
