@@ -6,8 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,8 +19,6 @@ import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
-import calculateur.Server;
-
 public class Repartiteur {
 
 	private static final int DEFAULT_PORT = 19005;
@@ -29,19 +26,17 @@ public class Repartiteur {
 
 	private static int MAX_REQUEST = 20;
 
-	private static Server server;
-
 	private static int cptRequest;
 
 	// List<WorkerNode>
-	private static List<WorkerNode> calculateurs;
+	private static ArrayDeque<WorkerNode> calculateurs;
 
 	public static void main(String[] args) {
 		if (args.length == 1) {
 			port = Integer.parseInt(args[0]);
 		}
 
-		calculateurs = new ArrayList<WorkerNode>();
+		calculateurs = new ArrayDeque<WorkerNode>();
 
 		run();
 	}
@@ -78,22 +73,22 @@ public class Repartiteur {
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				// System.out.println("charge: " + cptRequest);
+				System.out.println("charge: " + cptRequest);
 
 				if (cptRequest > MAX_REQUEST) {
-					addWorkerNode();
+					//addWorkerNode();
 				}
 
 				int nbWorkerNodes = calculateurs.size();
 				if (nbWorkerNodes * MAX_REQUEST > cptRequest && nbWorkerNodes > 1) {
-					delWorkerNode();
+					//delWorkerNode();
 				}
 
 				cptRequest = 0;
 			}
 		}, 0, 1000);
 
-		addWorkerNode();
+		//addWorkerNode();
 	}
 
 	public static void addWorkerNode() {
@@ -143,13 +138,30 @@ public class Repartiteur {
 
 		System.out.println("ssh OK...");
 
-		calculateurs.add(new WorkerNode(workerNodeId, ip));
+		// create configuration
+		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+		try {
+			config.setServerURL(new URL("http://"+ip+":19020/xmlrpc"));
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
+		config.setEnabledForExtensions(true);  
+		config.setConnectionTimeout(60 * 1000);
+		config.setReplyTimeout(60 * 1000);
+
+		XmlRpcClient client = new XmlRpcClient();
+
+		// use Commons HttpClient as transport
+		client.setTransportFactory(new XmlRpcCommonsTransportFactory(client));
+		// set configuration
+		client.setConfig(config);
+
+		calculateurs.addLast(new WorkerNode(workerNodeId, ip, client));
 	}
 
 	// TODO: test
 	public static void delWorkerNode() {
-		WorkerNode workerNode = calculateurs.get(calculateurs.size()-1);
-		calculateurs.remove(workerNode);
+		WorkerNode workerNode = calculateurs.pollLast();
 
 		String cmd = "nova delete myUbuntuIsAmazing" + workerNode.getId();
 
@@ -171,37 +183,22 @@ public class Repartiteur {
 		cptRequest++;
 
 		System.out.println("Request received");
-
-		// create configuration
-		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-		try {
-			config.setServerURL(new URL("http://195.220.53.28:22/xmlrpc"));
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
-		}
-		config.setEnabledForExtensions(true);  
-		config.setConnectionTimeout(60 * 1000);
-		config.setReplyTimeout(60 * 1000);
-
-		XmlRpcClient client = new XmlRpcClient();
-
-		// use Commons HttpClient as transport
-		client.setTransportFactory(new XmlRpcCommonsTransportFactory(client));
-		// set configuration
-		client.setConfig(config);
+/*
+		WorkerNode workerNode = calculateurs.pollFirst();		
+		calculateurs.addLast(workerNode);
 
 		Object[] params = new Object[]
 				{ new Integer(i1), new Integer(i2) };
 		Integer result = null;
 		try {
-			result = (Integer) client.execute("Calculateur." + method, params);
+			result = (Integer) workerNode.getClient().execute("Calculateur." + method, params);
 		} catch (XmlRpcException e) {
 			e.printStackTrace();
 		}
-		
-		System.out.println("Get result " + result);
 
-		return result;
+		System.out.println("Get result " + result);
+*/
+		return 0;
 	}
 
 	public static String executeProcess(String cmd) {

@@ -93,15 +93,20 @@ public class Client {
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				Object[] params = new Object[]
-						{ new String("add"), new Integer(2), new Integer(3) };
-				Integer result;
-				try {
-					result = (Integer) client.execute("Repartiteur.request", params);
-					System.out.println("2 + 3 = " + result);
-				} catch (XmlRpcException e) {
-					e.printStackTrace();
-				}
+				new Thread() {
+					public void run() {				
+						Object[] params = new Object[]
+								{ new String("add"), new Integer(2), new Integer(3) };
+						Integer result;
+						System.out.println("COUCOU!");
+						try {
+							result = (Integer) client.execute("Repartiteur.request", params);
+							System.out.println("2 + 3 = " + result);
+						} catch (XmlRpcException e) {
+							e.printStackTrace();
+						}
+					};
+				}.start();
 			}
 		}, 1000, 1000/requestRate);
 	}
