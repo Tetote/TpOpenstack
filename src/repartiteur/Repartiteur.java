@@ -36,7 +36,6 @@ public class Repartiteur {
 	private static int nbVmInCreation;
 	private static int nbVmInDeletion;
 
-	// List<WorkerNode>
 	private static ArrayDeque<WorkerNode> calculateurs;
 
 	public static void main(String[] args) {
@@ -53,8 +52,30 @@ public class Repartiteur {
 
 
 	public static void run() {
-		System.out.println(ColorUtil.GREEN + "== Repartiteur launch on port " + port + " ==");
+		startServer();
 
+		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Creating main WorkerNode");
+		addWorkerNode();
+
+		cptRequest = 0;
+		nbVmInCreation = 0;
+
+		startMainTimer();
+
+		// Suppression automatique des VMs lors d'un CTRL+C
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				System.out.println(ColorUtil.YELLOW + "\n[Repartiteur] Shutdown all VM... Please wait...");
+				for (WorkerNode node : calculateurs) {
+					delWorkerNode(node);
+				}
+			}
+		});
+
+		System.out.println(ColorUtil.GREEN + "== Repartiteur launch on port " + port + " ==");
+	}
+
+	public static void startServer() {
 		WebServer webServer = new WebServer(port);
 
 		XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
@@ -76,16 +97,16 @@ public class Repartiteur {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
 
-		addWorkerNode();
-
-		cptRequest = 0;
-		nbVmInCreation = 0;
-
+	/**
+	 * Timer qui permet la detection de montee de charge (creation de VM) et descente de charge (suppression de VM)
+	 */
+	public static void startMainTimer() {
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				// System.out.println("charge: " + cptRequest);
+				// System.out.println(ColorUtil.YELLOW + "[Repartiteur] Charge: " + cptRequest);
 				int cptRequestT = cptRequest;
 				int nbWorkerNodes = calculateurs.size();
 
@@ -100,7 +121,6 @@ public class Repartiteur {
 					}.start();
 				}
 
-				System.out.println("comp: " + (cptRequestT/MAX_REQUEST + 1));
 				if ((nbWorkerNodes-nbVmInDeletion)  > (cptRequestT/MAX_REQUEST + 1) && nbWorkerNodes > 1) {
 					nbVmInDeletion++;
 
@@ -115,18 +135,11 @@ public class Repartiteur {
 				cptRequest = 0;
 			}
 		}, 0, 1000);
-
-
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				System.out.println("\n== Shutdown all VM... Please wait...");
-				for (WorkerNode node : calculateurs) {
-					delWorkerNode(node);
-				}
-			}
-		});
 	}
 
+	/**
+	 * Permet de creer un WorkerNode
+	 */
 	public static void addWorkerNode() {
 		String workerNodeId = String.valueOf(System.currentTimeMillis()) + (char) (r.nextInt(122-97+1)+97);
 		System.out.println(ColorUtil.YELLOW + "[Repartiteur][VM"+workerNodeId+"] Spawning a VM");
@@ -134,12 +147,21 @@ public class Repartiteur {
 				+ " --nic net-id=c1445469-4640-4c5a-ad86-9c0cb6650cca --security-group myRuleIsAmazing"
 				+ " --key-name myKeyIsAmazing myUbuntuIsAmazing" + workerNodeId;
 
-		CommandUtil.executeProcess(cmd);
+
+		// Attente de la creation de la VM (si trop de VMs...)
+		while (CommandUtil.executeProcessReturnCode(cmd) != 0) {
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 
 		cmd = "nova list | grep myUbuntuIsAmazing" + workerNodeId;
 
 		System.out.println(ColorUtil.YELLOW + "[Repartiteur][VM"+workerNodeId+"] Checking VM status...");
 
+		// Attente du boot de la VM
 		while (!CommandUtil.executeProcess(cmd).contains("Running")) {
 			try {
 				Thread.sleep(1500);
@@ -164,6 +186,7 @@ public class Repartiteur {
 
 		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar "+SERVER_PORT+" >/dev/null 2>/dev/null &'";
 
+		// Attente du SSH
 		while (CommandUtil.executeProcessReturnCode(cmd) != 0) {
 			try {
 				Thread.sleep(1500);
@@ -201,10 +224,17 @@ public class Repartiteur {
 		calculateurs.addLast(new WorkerNode(workerNodeId, ip, client));
 	}
 
+	/**
+	 * Permet de supprimer le dernier WorkerNode
+	 */
 	public static void delWorkerNode() {
 		delWorkerNode(calculateurs.pollLast());
 	}
 
+	/**
+	 * Permet de supprimer un WorkerNode
+	 * @param workerNode
+	 */
 	public static void delWorkerNode(WorkerNode workerNode) {
 
 		System.out.println(ColorUtil.YELLOW + "[Repartiteur] Deleting VM "+workerNode.getIp()+" ...");
@@ -224,6 +254,13 @@ public class Repartiteur {
 		CommandUtil.executeProcess(cmd);
 	}
 
+	/**
+	 * Reception d'une requete d'un client
+	 * @param methode add ou subtract
+	 * @param i1 nombre 1
+	 * @param i2 nombre 2
+	 * @return resultat calcule par un WorkerNode
+	 */
 	public Integer request(String method, int i1, int i2) {
 		cptRequest++;
 
