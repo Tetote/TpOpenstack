@@ -23,30 +23,38 @@ public class Client {
 	private static final Random r = new Random();
 
 	public static final int PORT_CLIENT = 19000;
+	public static final String REPARTITEUR_IP = "127.0.0.1";
+	public static final int REPARTITEUR_PORT = 19005;
 
 	public static XmlRpcClient client;
 	public static int requestRate = 18;
+	public static int port = PORT_CLIENT;
+	public static String repartiteurIp = REPARTITEUR_IP;
+	public static int repartiteurPort = REPARTITEUR_PORT;
 
 	private static TimerTask timerTask;
 	private static Timer timer;
 
 	public static void main(String[] args) throws Exception {
-		String host = "127.0.0.1";
-		int port = 19005;
-
-		if (args.length == 3) {
-			requestRate = Integer.parseInt(args[0]);
-			host = args[1];
-			port = Integer.parseInt(args[2]);
+		if (args.length == 0) {
+			System.out.println(ColorUtil.YELLOW + "[Client] launch with default params");
+		} else if (args.length == 4) {
+			port = Integer.parseInt(args[0]);
+			requestRate = Integer.parseInt(args[1]);
+			repartiteurIp = args[2];
+			repartiteurPort = Integer.parseInt(args[3]);
+		} else {
+			System.out.println(ColorUtil.RED + "[Client] Usage : port requestRate repartiteurIp repartiteurPort");
+			System.exit(0);
 		}
 
-		connectRepartiteur(host, port);
+		connectRepartiteur(repartiteurIp, repartiteurPort);
 
 		startServer();
 
 		runTimer();
 
-		System.out.println(ColorUtil.GREEN + "== Client started on port " + PORT_CLIENT);
+		System.out.println(ColorUtil.GREEN + "== Client started on port " + port);
 	}
 
 	public static void connectRepartiteur(String ip, int port) {
@@ -70,7 +78,7 @@ public class Client {
 	}
 
 	public static void startServer() {
-		WebServer webServer = new WebServer(PORT_CLIENT);
+		WebServer webServer = new WebServer(port);
 
 		XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
 
