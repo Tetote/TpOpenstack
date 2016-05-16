@@ -28,6 +28,8 @@ public class Repartiteur {
 	private static final int DEFAULT_PORT = 19005;
 	private static int port = DEFAULT_PORT;
 
+	private static final int SERVER_PORT = 19020;
+
 	private static int MAX_REQUEST = 100;
 
 	private static int cptRequest;
@@ -160,7 +162,7 @@ public class Repartiteur {
 
 		System.out.println(ColorUtil.YELLOW + "[Repartiteur][VM"+workerNodeId+"] Waiting ssh for ip "+ip+"...");
 
-		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar 19020 >/dev/null 2>/dev/null &'";
+		cmd = "ssh ubuntu@" + ip + " 'nohup java -jar Server.jar "+SERVER_PORT+" >/dev/null 2>/dev/null &'";
 
 		while (CommandUtil.executeProcessReturnCode(cmd) != 0) {
 			try {
@@ -181,7 +183,7 @@ public class Repartiteur {
 		// create configuration
 		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 		try {
-			config.setServerURL(new URL("http://"+ip+":19020/xmlrpc"));
+			config.setServerURL(new URL("http://"+ip+":"+SERVER_PORT+"/xmlrpc"));
 		} catch (MalformedURLException e1) {
 			e1.printStackTrace();
 		}
