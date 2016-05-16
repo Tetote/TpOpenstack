@@ -30,7 +30,7 @@ public class Repartiteur {
 
 	private static final int SERVER_PORT = 19020;
 
-	private static int MAX_REQUEST = 100;
+	private static int MAX_REQUEST = 50;
 
 	private static int cptRequest;
 	private static int nbVmInCreation;
@@ -150,6 +150,7 @@ public class Repartiteur {
 
 		// Attente de la creation de la VM (si trop de VMs...)
 		while (CommandUtil.executeProcessReturnCode(cmd) != 0) {
+			System.out.println(ColorUtil.RED + "[Repartiteur][VM"+workerNodeId+"] VM not created... Retrying...");
 			try {
 				Thread.sleep(1500);
 			} catch (InterruptedException e) {
